@@ -5,15 +5,17 @@ import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 
-public class ProducerDemoWithCallB {
+public class ProducerDemoWithKeys {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
          //Logger
         final Logger logger;
-        logger = LoggerFactory.getLogger(ProducerDemoWithCallB.class);
+        logger = LoggerFactory.getLogger(ProducerDemoWithKeys.class);
 
 
         String bootstrapServers = "127.0.0.1:9092";
@@ -29,8 +31,12 @@ public class ProducerDemoWithCallB {
         KafkaProducer <String, String> producer = new KafkaProducer<String, String>(properties);
 for (int i = 0; i < 10; i++) {
     //create the producer record
-    ProducerRecord<String, String> record = new ProducerRecord<String, String>("first_topic", "hello with callback " + Integer.toString(i));
 
+    String topic = "first_topic";
+    String value = "hello with keys " + Integer.toString(i);
+    String key = "Key id_" + Integer.toString(i);
+    ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, key, value);
+    logger.info("Key: " + key); // log the key
     //send data
     producer.send(record, new Callback() {
         public void onCompletion(RecordMetadata recordMetadata, Exception e) {
@@ -47,7 +53,7 @@ for (int i = 0; i < 10; i++) {
                 logger.error("Error while producing", e);
             }
         }
-    });
+    }).get(); // add this to make things synchronous, but not sure that this is a good idea
 }
     //to send data we need to do flush data
         producer.flush();
